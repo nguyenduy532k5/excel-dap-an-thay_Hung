@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Excel 365 – Trích xuất đáp án (PWA)
 
 Web app chạy trong trình duyệt, cài được lên màn hình chính điện thoại như app thật.
@@ -49,3 +50,4 @@ npm run build
 npx serve .        # hoặc: python -m http.server 8080
 ```
 Service worker chỉ hoạt động trên `https://` hoặc `http://localhost`, không chạy khi mở file trực tiếp (`file://`).
+=======
