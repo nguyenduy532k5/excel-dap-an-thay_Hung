@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Book1 - Excel</title>
+  <meta name="theme-color" content="#107c41" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Đáp án Excel" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="tailwind.css" />
+  <script src="vendor/jszip.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f3f2f1;
+      color: #252423;
+      overflow: hidden;
+      height: 100dvh;
+      width: 100vw;
+      margin: 0;
+    }
+    /* Custom Scrollbars giống Excel */
+    ::-webkit-scrollbar {
+      width: 11px;
+      height: 11px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f3f2f1;
+      border-left: 1px solid #e1dfdd;
+      border-top: 1px solid #e1dfdd;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c8c6c4;
+      border: 2px solid #f3f2f1;
+      border-radius: 6px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a19f9d;
+    }
+    /* Bảng lưới Excel */
+    .excel-grid {
+      table-layout: fixed;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      transform-origin: top left;
+    }
+    .excel-grid th {
+      background-color: #f3f2f1;
+      color: #323130;
+      font-weight: 400;
+      font-size: 12px;
+      border: 1px solid #d2d0ce;
+      padding: 0;
+      height: 22px;
+      text-align: center;
+      position: sticky;
+      z-index: 20;
+    }
+    .excel-grid thead th {
+      top: 0;
+    }
+    .excel-grid .row-header {
+      background-color: #f3f2f1;
+      color: #323130;
+      font-weight: 400;
+      font-size: 12px;
+      border: 1px solid #d2d0ce;
+      text-align: center;
+      position: sticky;
+      left: 0;
+      z-index: 15;
+      width: 36px;
+      min-width: 36px;
+    }
+    .excel-grid td {
+      border: 1px solid #e1dfdd;
+      font-size: 12px;
+      padding: 0 4px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #000000;
+      user-select: text;
+    }
+    .excel-grid td.loaded-font {
+      font-family: 'Cambria', 'Times New Roman', serif;
+      font-size: 13px;
+      white-space: normal;
+    }
+    /* Ô đang được chọn giống Excel */
+    .cell-selected {
+      outline: 2px solid #107c41 !important;
+      outline-offset: -1px;
+      position: relative;
+      z-index: 10;
+    }
+    .cell-selected::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 6px;
+      height: 6px;
+      background-color: #107c41;
+      border: 1px solid #ffffff;
+    }
+    .header-highlight {
+      background-color: #e1dfdd !important;
+      color: #107c41 !important;
+      font-weight: 700 !important;
+      border-bottom: 2px solid #107c41 !important;
+    }
+    .row-highlight {
+      background-color: #e1dfdd !important;
+      color: #107c41 !important;
+      font-weight: 700 !important;
+      border-right: 2px solid #107c41 !important;
+    }
+    .ribbon-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3px 8px 2px 8px;
+      border-right: 1px solid #e1dfdd;
+      height: 100%;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .ribbon-group-title {
+      font-size: 11px;
+      color: #605e5c;
+      text-align: center;
+      margin-top: auto;
+      padding-top: 2px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .ribbon-btn:hover {
+      background-color: #edebe9;
+      border-radius: 3px;
+    }
+    .tab-active {
+      font-weight: 600;
+      color: #252423;
+      position: relative;
+    }
+    .tab-active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 6px;
+      right: 6px;
+      height: 3px;
+      background-color: #107c41;
+      border-radius: 2px;
+    }
+
+    /* RESPONSIVE & DEVICE SIMULATOR MODE */
+    /* Mặc định Tự động theo kích thước màn hình */
+    .desktop-only { display: none; }
+    .mobile-only { display: flex; }
+    @media (min-width: 768px) {
+      .desktop-only { display: flex; }
+      .mobile-only { display: none; }
+    }
+
+    /* Ép chế độ Điện thoại ngay trên màn hình Máy tính */
+    body.force-mobile {
+      background-color: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    body.force-mobile #appShell {
+      width: 390px !important;
+      max-width: 100vw !important;
+      height: 844px !important;
+      max-height: 95dvh !important;
+      border-radius: 34px;
+      border: 8px solid #0f172a;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      background-color: #f3f2f1;
+    }
+    body.force-mobile .desktop-only { display: none !important; }
+    body.force-mobile .mobile-only { display: flex !important; }
+
+    /* Ép chế độ Máy tính trên mọi màn hình */
+    body.force-desktop .desktop-only { display: flex !important; }
+    body.force-desktop .mobile-only { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- Thẻ input file ẩn dùng chung cho cả Mobile & Desktop -->
+  <input id="fileInput" type="file" accept=".xlsx,.xlsm" class="hidden" />
+
+  <!-- Custom Toast Notification -->
+  <div id="toastBanner" class="hidden fixed top-12 left-1/2 -translate-x-1/2 z-[100] bg-[#107c41] text-white px-4 py-2 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-white/25 max-w-[92vw]">
+    <span id="toastText" class="truncate">Đang xử lý...</span>
+    <button onclick="hideToast()" class="ml-1 text-white/80 hover:text-white font-bold text-sm leading-none">×</button>
+  </div>
+
+  <!-- Khung App chính (Tự động co giãn hoặc giả lập khung iPhone khi chọn chế độ Điện thoại) -->
+  <div id="appShell" class="flex flex-col h-full w-full overflow-hidden relative bg-[#f3f2f1]">
+
+    <!-- ========================================================================= -->
+    <!-- A. GIAO DIỆN MOBILE APP HEADER (< 768px hoặc khi bật chế độ Điện thoại) -->
+    <!-- ========================================================================= -->
+    <header class="mobile-only h-[52px] bg-[#107c41] text-white items-center justify-between px-3 shrink-0 shadow-sm z-30">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <!-- Nút File -> Open trên Mobile -->
+        <button onclick="openMobileSheet('file')" class="w-9 h-9 rounded-lg bg-white/15 active:bg-white/25 flex items-center justify-center shrink-0" title="Menu File -> Open">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="min-w-0" onclick="openMobileSheet('file')">
+          <div class="flex items-center gap-1.5">
+            <span id="mobileTitleText" class="font-bold text-sm truncate">Book1.xlsx</span>
+            <span id="mobileGreenBadge" class="hidden px-1.5 py-0.5 rounded bg-[#92D050] text-slate-950 font-extrabold text-[10px] shrink-0">0</span>
+          </div>
+          <div id="mobileSubStatus" class="text-[11px] text-emerald-100 truncate">Chạm File ☰ -> Open để tải file</div>
+        </div>
+      </div>
+
+      <!-- Cụm nút bên phải trên Mobile: Chọn nhanh MSSV, Xuất File, Đổi giao diện -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="openMobileSheet('mssv')" class="h-8 px-2.5 rounded-lg bg-white/15 active:bg-white/25 text-xs font-semibold flex items-center gap-1 border border-white/20">
+          <span>🎓</span>
+          <span id="mobileMssvPill" class="max-w-[72px] truncate">MSSV</span>
+        </button>
+        <button onclick="exportFilledExcel()" title="Xuất file Excel đã điền đáp án" class="w-8 h-8 rounded-lg bg-[#92D050] text-slate-950 font-bold flex items-center justify-center shadow">
+          ⬇
+        </button>
+        <button onclick="cycleViewMode()" title="Chuyển chế độ hiển thị (Tự động / Điện thoại / Máy tính)" class="w-8 h-8 rounded-lg bg-black/20 text-white text-xs flex items-center justify-center">
+          💻
+        </button>
+      </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- B. GIAO DIỆN DESKTOP TITLE BAR & RIBBON (>= 768px)                       -->
+    <!-- ========================================================================= -->
+    <!-- 1. TOP TITLE BAR (Desktop) -->
+    <header class="desktop-only h-[34px] bg-[#f3f2f1] items-center justify-between px-3 select-none shrink-0">
+      <div class="flex items-center gap-2.5 text-xs text-[#323130]">
+        <div class="w-5 h-5 rounded bg-[#107c41] flex items-center justify-center text-white font-bold text-[11px] shadow-sm">
+          X
+        </div>
+        <div class="flex items-center gap-1.5 mr-1">
+          <span class="text-[11px] text-[#323130]">AutoSave</span>
+          <div class="w-8 h-4 rounded-full border border-[#605e5c] flex items-center px-0.5 bg-white cursor-pointer" title="AutoSave">
+            <div class="w-2.5 h-2.5 rounded-full bg-[#605e5c]"></div>
+            <span class="text-[8px] text-[#605e5c] ml-0.5 font-semibold">Off</span>
+          </div>
+        </div>
+        <!-- Save Button (Xuất Excel đã điền) -->
+        <button onclick="exportFilledExcel()" title="Lưu / Xuất File Excel Đã Điền Ô Xanh" class="p-1 hover:bg-[#e1dfdd] rounded text-[#484644] cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="#605e5c" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </button>
+        <!-- Undo -->
+        <button onclick="resetOriginalMssv()" title="Hoàn tác về MSSV gốc" class="p-1 hover:bg-[#e1dfdd] rounded text-[#a19f9d] cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M3 7v6h6"></path>
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+          </svg>
+        </button>
+        <!-- Redo -->
+        <button class="p-1 hover:bg-[#e1dfdd] rounded text-[#a19f9d] cursor-default">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M21 7v6h-6"></path>
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+          </svg>
+        </button>
+        <span class="text-[#605e5c] text-[10px]">▾</span>
+        <span id="windowTitleText" class="ml-2 text-xs text-[#323130] font-normal truncate max-w-[220px]">Book1 - Excel</span>
+      </div>
+
+      <!-- Center: Search Bar -->
+      <div class="flex-1 max-w-[360px] mx-4">
+        <form onsubmit="handleSearchSubmit(event)" class="relative flex items-center">
+          <svg class="w-3.5 h-3.5 text-[#605e5c] absolute left-2.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="topSearchInput" type="text" placeholder="Search (Nhập MSSV cần tra cứu rồi nhấn Enter)"
+            class="w-full h-[24px] pl-8 pr-3 rounded bg-white border border-[#e1dfdd] text-xs text-[#323130] placeholder-[#605e5c] focus:outline-none focus:border-[#107c41] shadow-inner" />
+        </form>
+      </div>
+
+      <!-- Right: View Switcher (Responsive / Mobile / Desktop) & Window Controls -->
+      <div class="flex items-center gap-1.5">
+        <button onclick="cycleViewMode()" id="viewModeBtnDesktop" class="h-[22px] px-2 rounded bg-white border border-[#d2d0ce] hover:bg-[#edebe9] text-[11px] text-[#107c41] font-semibold flex items-center gap-1 cursor-pointer" title="Chuyển đổi qua lại giữa giao diện Điện thoại và Máy tính">
+          <span>📱</span>
+          <span id="viewModeLabel">Responsive: Tự động</span>
+        </button>
+        <div class="w-6 h-6 rounded-full bg-[#0078d4] text-white text-[10px] font-semibold flex items-center justify-center ml-1">
+          NV
+        </div>
+        <div class="w-7 h-7 flex items-center justify-center hover:bg-[#e1dfdd] text-[#323130] text-xs cursor-default">─</div>
+        <div class="w-7 h-7 flex items-center justify-center hover:bg-[#e1dfdd] text-[#323130] text-[10px] cursor-default">▢</div>
+        <div class="w-7 h-7 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-[#323130] text-sm cursor-default">×</div>
+      </div>
+    </header>
+
+    <!-- 2. MENU TABS BAR (Desktop) -->
+    <nav class="desktop-only h-[30px] bg-[#f3f2f1] items-center justify-between px-2 border-b border-[#e1dfdd] shrink-0 relative">
+      <div class="flex items-center gap-0.5 text-[12px] text-[#323130] h-full">
+        <button id="menuBtnFile" onclick="toggleFileMenu(event)" class="px-3 h-full hover:bg-[#107c41] hover:text-white rounded-t font-semibold text-[#107c41] cursor-pointer">File</button>
+        <button id="menuTab_home" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-3 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer tab-active">Home</button>
+        <button id="menuTab_insert" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Insert</button>
+        <button id="menuTab_draw" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Draw</button>
+        <button id="menuTab_pagelayout" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Page Layout</button>
+        <button id="menuTab_formulas" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Formulas</button>
+        <button id="menuTab_data" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Data</button>
+        <button id="menuTab_review" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Review</button>
+        <button id="menuTab_view" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">View</button>
+        <button id="menuTab_automate" onclick="switchRibbonTab('home')" class="ribbon-tab-btn px-2.5 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer">Automate</button>
+        <button id="menuTab_help" onclick="switchRibbonTab('help')" class="ribbon-tab-btn px-3 h-full hover:bg-[#e1dfdd] rounded-t cursor-pointer flex items-center gap-1">
+          <span>Help</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[#107c41]" title="Cấu hình Gemini API ở đây"></span>
+        </button>
+      </div>
+
+      <!-- Right side buttons: Comments & Share -->
+      <div class="flex items-center gap-1.5 pr-1">
+        <button onclick="toggleCompareOld()" id="btnCompareTop" class="h-[22px] px-2.5 bg-white border border-[#d2d0ce] hover:bg-[#f3f2f1] rounded text-[11px] text-[#323130] flex items-center gap-1 shadow-2xs cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-[#605e5c]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="commentsBtnLabel">Comments</span>
+        </button>
+        <button onclick="exportFilledExcel()" class="h-[22px] px-2.5 bg-[#107c41] hover:bg-[#0c5e31] text-white rounded text-[11px] font-semibold flex items-center gap-1 shadow-2xs cursor-pointer" title="Xuất file Excel đã điền ô xanh lá">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16 6 12 2 8 6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+          </svg>
+          <span>Share</span>
+          <span class="text-[9px] ml-0.5">▾</span>
+        </button>
+      </div>
+
+      <!-- FILE -> OPEN DROPDOWN MENU (Desktop) -->
+      <div id="fileMenuDropdown" class="hidden absolute top-[30px] left-0 w-72 bg-white border border-[#d2d0ce] shadow-2xl rounded-br-lg z-50 overflow-hidden">
+        <div class="bg-[#107c41] text-white px-4 py-2.5 flex items-center justify-between">
+          <span class="font-semibold text-xs tracking-wide">File Menu</span>
+          <button onclick="closeFileMenu()" class="text-white/80 hover:text-white text-sm font-bold cursor-pointer">✕</button>
+        </div>
+        <div class="py-1.5 text-xs text-[#323130]">
+          <button onclick="resetApp(); closeFileMenu();" class="w-full px-4 py-2.5 hover:bg-[#edebe9] flex items-center gap-3 text-left cursor-pointer">
+            <span class="w-6 h-6 rounded bg-[#f3f2f1] border border-[#d2d0ce] flex items-center justify-center text-[#107c41] font-bold">+</span>
+            <div>
+              <div class="font-semibold">New</div>
+              <div class="text-[11px] text-[#605e5c]">Tạo bảng trống mới (Book1)</div>
+            </div>
+          </button>
+
+          <button onclick="openFilePicker(); closeFileMenu();" class="w-full px-4 py-2.5 bg-[#e1dfdd]/50 hover:bg-[#c8e6c9]/60 flex items-center gap-3 text-left border-l-4 border-[#107c41] cursor-pointer">
+            <span class="w-6 h-6 rounded bg-[#107c41] flex items-center justify-center text-white">📂</span>
+            <div>
+              <div class="font-bold text-[#107c41]">Open...</div>
+              <div class="text-[11px] text-[#605e5c]">Tải file Excel (.xlsx / .xlsm) lên</div>
+            </div>
+          </button>
+
+          <div class="my-1 border-t border-[#e1dfdd]"></div>
+
+          <button onclick="exportFilledExcel(); closeFileMenu();" class="w-full px-4 py-2.5 hover:bg-[#edebe9] flex items-center gap-3 text-left cursor-pointer">
+            <span class="w-6 h-6 rounded bg-[#f3f2f1] border border-[#d2d0ce] flex items-center justify-center text-[#107c41]">💾</span>
+            <div>
+              <div class="font-semibold">Save / Export Filled (.xlsx)</div>
+              <div class="text-[11px] text-[#605e5c]">Xuất file Excel đã điền đáp án ô xanh</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 3. RIBBON TOOLBAR CONTAINER (Desktop) -->
+    <div class="desktop-only px-2 pt-1 pb-1.5 bg-[#f3f2f1] shrink-0">
+      <!-- TAB HOME RIBBON -->
+      <div id="ribbonHome" class="w-full h-[88px] bg-white rounded-lg border border-[#e1dfdd] shadow-2xs flex items-center px-1 overflow-x-auto overflow-y-hidden">
+        <!-- Group 1: Clipboard -->
+        <div class="ribbon-group min-w-[130px]">
+          <div class="flex items-center gap-1.5 h-full">
+            <div onclick="openFilePicker()" title="Nhấn để mở nhanh file Excel hoặc dùng File -> Open" class="ribbon-btn flex flex-col items-center justify-center px-2 py-1 cursor-pointer">
+              <svg class="w-6 h-6 text-[#d29200]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 16H5V5h2v2h10V5h2v14z"/>
+              </svg>
+              <span class="text-[11px] text-[#323130] mt-0.5">Paste</span>
+              <span class="text-[8px] text-[#605e5c] leading-none">▾</span>
+            </div>
+            <div class="flex flex-col justify-center gap-0.5 text-[11px] text-[#323130]">
+              <div class="ribbon-btn px-1.5 py-0.5 flex items-center gap-1.5 cursor-default">
+                <span class="text-[#0078d4] text-xs">✂</span> <span>Cut</span>
+              </div>
+              <div class="ribbon-btn px-1.5 py-0.5 flex items-center gap-1.5 cursor-default">
+                <span class="text-[#605e5c] text-xs">❐</span> <span>Copy</span> <span class="text-[8px]">▾</span>
+              </div>
+              <div class="ribbon-btn px-1.5 py-0.5 flex items-center gap-1.5 cursor-default">
+                <span class="text-[#d29200] text-xs">🖌</span> <span class="whitespace-nowrap">Format Painter</span>
+              </div>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Clipboard <span class="text-[9px] ml-1">↘</span></div>
+        </div>
+
+        <!-- Group 2: Font -->
+        <div class="ribbon-group min-w-[205px]">
+          <div class="flex flex-col gap-1.5 pt-1">
+            <div class="flex items-center gap-1">
+              <div class="h-[22px] w-[108px] border border-[#d2d0ce] rounded-xs px-1.5 flex items-center justify-between text-[11px] bg-white">
+                <span>Aptos Narrow</span>
+                <span class="text-[9px] text-[#605e5c]">▾</span>
+              </div>
+              <div class="h-[22px] w-[40px] border border-[#d2d0ce] rounded-xs px-1.5 flex items-center justify-between text-[11px] bg-white">
+                <span>11</span>
+                <span class="text-[9px] text-[#605e5c]">▾</span>
+              </div>
+              <button class="ribbon-btn px-1 text-xs font-semibold">A<sup class="text-[8px] text-[#0078d4]">▲</sup></button>
+              <button class="ribbon-btn px-1 text-xs font-semibold">A<sup class="text-[8px] text-[#0078d4]">▼</sup></button>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs">
+              <button class="ribbon-btn w-6 h-5 font-bold">B</button>
+              <button class="ribbon-btn w-6 h-5 italic font-serif">I</button>
+              <button class="ribbon-btn w-6 h-5 underline">U <span class="text-[8px] no-underline">▾</span></button>
+              <span class="h-4 w-[1px] bg-[#e1dfdd]"></span>
+              <button class="ribbon-btn px-1 h-5 flex items-center gap-0.5">
+                <span class="w-3.5 h-3.5 border border-[#605e5c] grid grid-cols-2"></span>
+                <span class="text-[8px]">▾</span>
+              </button>
+              <button onclick="jumpToNextGreenCell()" class="ribbon-btn px-1 h-5 flex items-center gap-0.5 cursor-pointer" title="Nhảy tới ô đáp án xanh lá #92D050 tiếp theo">
+                <span class="flex flex-col items-center">
+                  <span class="text-[11px] leading-none">🪣</span>
+                  <span class="w-3.5 h-1 bg-[#92D050] block"></span>
+                </span>
+                <span class="text-[8px]">▾</span>
+              </button>
+              <button class="ribbon-btn px-1 h-5 flex items-center gap-0.5">
+                <span class="flex flex-col items-center">
+                  <span class="text-[11px] font-bold leading-none">A</span>
+                  <span class="w-3.5 h-1 bg-red-600 block"></span>
+                </span>
+                <span class="text-[8px]">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Font <span class="text-[9px] ml-1">↘</span></div>
+        </div>
+
+        <!-- Group 3: Alignment -->
+        <div class="ribbon-group min-w-[205px]">
+          <div class="flex items-center gap-2 pt-1">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1">
+                <button class="ribbon-btn w-6 h-5 text-[10px] text-[#605e5c]">⎺</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px] text-[#605e5c]">─</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px] bg-[#e1dfdd] rounded-xs">⎽</button>
+                <button class="ribbon-btn px-1 h-5 text-[10px]">ab↗ <span class="text-[8px]">▾</span></button>
+              </div>
+              <div class="flex items-center gap-1">
+                <button class="ribbon-btn w-6 h-5 text-[10px]">☰</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px]">☷</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px]">☲</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px]">⇤</button>
+                <button class="ribbon-btn w-6 h-5 text-[10px]">⇥</button>
+              </div>
+            </div>
+            <span class="h-10 w-[1px] bg-[#e1dfdd]"></span>
+            <div class="flex flex-col gap-1 text-[11px]">
+              <button class="ribbon-btn px-1.5 py-0.5 flex items-center gap-1 text-left">
+                <span class="text-[#0078d4] font-mono text-[10px]">ab↵</span>
+                <span>Wrap Text</span>
+              </button>
+              <button class="ribbon-btn px-1.5 py-0.5 flex items-center gap-1 text-left">
+                <span class="text-[#0078d4] text-[10px]">⊞</span>
+                <span>Merge & Center</span>
+                <span class="text-[8px]">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Alignment <span class="text-[9px] ml-1">↘</span></div>
+        </div>
+
+        <!-- Group 4: Number -->
+        <div class="ribbon-group min-w-[125px]">
+          <div class="flex flex-col gap-1.5 pt-1">
+            <div class="h-[22px] w-full border border-[#d2d0ce] rounded-xs px-1.5 flex items-center justify-between text-[11px] bg-white">
+              <span>General</span>
+              <span class="text-[9px] text-[#605e5c]">▾</span>
+            </div>
+            <div class="flex items-center justify-between px-0.5 text-xs text-[#323130]">
+              <button class="ribbon-btn px-1 h-5 font-semibold">$ <span class="text-[8px] font-normal">▾</span></button>
+              <button class="ribbon-btn px-1.5 h-5 font-semibold">%</button>
+              <button class="ribbon-btn px-1.5 h-5 font-bold">,</button>
+              <button class="ribbon-btn px-1 h-5 text-[10px] text-[#0078d4]">.00</button>
+              <button class="ribbon-btn px-1 h-5 text-[10px] text-[#0078d4]">→.0</button>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Number <span class="text-[9px] ml-1">↘</span></div>
+        </div>
+
+        <!-- Group 5: Styles -->
+        <div class="ribbon-group min-w-[355px]">
+          <div class="flex items-center gap-2 pt-0.5 h-full">
+            <div onclick="toggleCheckerRows()" title="Bấm để Hiện/Ẩn dòng chấm điểm ẩn (TRUE/FALSE)" class="ribbon-btn flex flex-col items-center justify-center px-1.5 py-0.5 cursor-pointer">
+              <div class="w-6 h-5 border border-[#d2d0ce] grid grid-cols-3 gap-0.5 p-0.5 bg-white">
+                <span class="bg-red-300"></span><span class="bg-blue-300"></span><span class="bg-green-300"></span>
+                <span class="bg-yellow-200"></span><span class="bg-red-400"></span><span class="bg-green-400"></span>
+              </div>
+              <span class="text-[10px] leading-tight text-center mt-0.5">Conditional<br>Formatting ▾</span>
+            </div>
+            <div onclick="toggleCompareOld()" title="Bấm để So sánh bài làm cũ" class="ribbon-btn flex flex-col items-center justify-center px-1.5 py-0.5 cursor-pointer">
+              <div class="w-6 h-5 border border-[#0078d4] grid grid-cols-3 bg-[#deecf9]"></div>
+              <span class="text-[10px] leading-tight text-center mt-0.5">Format as<br>Table ▾</span>
+            </div>
+            <div class="border border-[#d2d0ce] rounded-xs p-1 grid grid-cols-3 gap-1 bg-white text-[11px]">
+              <div class="px-2 py-0.5 border border-[#0078d4] bg-white text-[#323130] truncate">Normal</div>
+              <div class="px-2 py-0.5 bg-[#ffc7ce] text-[#9c0006] truncate">Bad</div>
+              <div onclick="jumpToNextGreenCell()" class="px-2 py-0.5 bg-[#c6efce] text-[#006100] truncate font-semibold cursor-pointer" title="Nhảy tới ô xanh lá tiếp theo">Good</div>
+              <div class="px-2 py-0.5 bg-[#ffeb9c] text-[#9c6500] truncate">Neutral</div>
+              <div class="px-2 py-0.5 bg-[#f2f2f2] border border-[#d2d0ce] text-[#fa7d00] font-semibold truncate">Calculation</div>
+              <div class="px-2 py-0.5 bg-[#a5a5a5] text-white font-semibold truncate">Check Cell</div>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Styles</div>
+        </div>
+
+        <!-- Group 6: Cells -->
+        <div class="ribbon-group min-w-[120px]">
+          <div class="flex items-center gap-2 h-full pt-0.5">
+            <div class="ribbon-btn flex flex-col items-center px-1 cursor-default">
+              <span class="text-[#0078d4] text-sm">⊞</span>
+              <span class="text-[11px] mt-0.5">Insert</span>
+              <span class="text-[8px]">▾</span>
+            </div>
+            <div class="ribbon-btn flex flex-col items-center px-1 cursor-default">
+              <span class="text-[#d13438] text-sm">⊟</span>
+              <span class="text-[11px] mt-0.5">Delete</span>
+              <span class="text-[8px]">▾</span>
+            </div>
+            <div class="ribbon-btn flex flex-col items-center px-1 cursor-default">
+              <span class="text-[#0078d4] text-sm">◫</span>
+              <span class="text-[11px] mt-0.5">Format</span>
+              <span class="text-[8px]">▾</span>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Cells</div>
+        </div>
+
+        <!-- Group 7: Editing -->
+        <div class="ribbon-group min-w-[160px]">
+          <div class="flex items-center gap-2 h-full pt-0.5">
+            <div class="flex flex-col justify-center gap-0.5 text-[11px]">
+              <div class="ribbon-btn px-1 flex items-center gap-1 cursor-default">
+                <span class="text-[#0078d4] font-bold">∑</span> <span>AutoSum</span> <span class="text-[8px]">▾</span>
+              </div>
+              <div class="ribbon-btn px-1 flex items-center gap-1 cursor-default">
+                <span class="text-[#0078d4]">⬇</span> <span>Fill</span> <span class="text-[8px]">▾</span>
+              </div>
+              <div onclick="resetApp()" class="ribbon-btn px-1 flex items-center gap-1 cursor-pointer" title="Xóa bảng hiện tại">
+                <span class="text-[#d83b01]">⌫</span> <span>Clear</span> <span class="text-[8px]">▾</span>
+              </div>
+            </div>
+            <div class="ribbon-btn flex flex-col items-center px-1 cursor-default">
+              <span class="text-[#0078d4] text-sm font-bold">A↓Z</span>
+              <span class="text-[10px] leading-tight text-center mt-0.5">Sort &<br>Filter ▾</span>
+            </div>
+            <div onclick="jumpToNextGreenCell()" class="ribbon-btn flex flex-col items-center px-1 cursor-pointer" title="Tìm ô xanh lá tiếp theo">
+              <span class="text-[#0078d4] text-sm">🔍</span>
+              <span class="text-[10px] leading-tight text-center mt-0.5">Find &<br>Select ▾</span>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Editing</div>
+        </div>
+
+        <!-- Group 8: Add-ins & Bộ chọn MSSV -->
+        <div class="ribbon-group border-r-0 min-w-[215px]">
+          <div class="flex items-center gap-2 h-full pt-0.5">
+            <div onclick="openFilePicker()" title="Nhấn để tải file Excel (.xlsx/.xlsm)" class="ribbon-btn flex flex-col items-center px-2 cursor-pointer">
+              <div class="w-6 h-6 border-2 border-[#d83b01] rounded-xs grid grid-cols-2 gap-0.5 p-0.5">
+                <span class="bg-[#d83b01]"></span><span class="bg-[#d83b01]"></span>
+                <span class="bg-[#d83b01]"></span><span class="border border-[#d83b01]"></span>
+              </div>
+              <span class="text-[11px] mt-1">Add-ins</span>
+            </div>
+
+            <div class="flex flex-col gap-1 border-l border-[#e1dfdd] pl-2">
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] font-semibold text-[#107c41]">MSSV:</span>
+                <select id="mssvSelect" onchange="onMssvChange(this.value)" class="h-[20px] w-[125px] text-[11px] border border-[#d2d0ce] rounded-xs px-1 bg-white text-[#323130] font-semibold focus:outline-none focus:border-[#107c41]">
+                  <option value="">(Chưa tải file)</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-1">
+                <button id="btnToggleChecker" type="button" onclick="toggleCheckerRows()" class="h-[20px] px-1.5 text-[10px] border border-[#d2d0ce] rounded-xs bg-[#f3f2f1] hover:bg-[#e1dfdd] text-[#323130] cursor-pointer">
+                  Hiện chấm ẩn
+                </button>
+                <button id="btnCompareOld" type="button" onclick="toggleCompareOld()" class="h-[20px] px-1.5 text-[10px] border border-[#d2d0ce] rounded-xs bg-[#f3f2f1] hover:bg-[#e1dfdd] text-[#323130] cursor-pointer">
+                  So sánh cũ
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Add-ins & MSSV</div>
+        </div>
+      </div>
+
+      <!-- TAB HELP RIBBON (Desktop: Chứa tính năng Cấu hình Gemini API & Đối soát AI) -->
+      <div id="ribbonHelp" class="hidden w-full h-[88px] bg-white rounded-lg border border-[#e1dfdd] shadow-2xs items-center px-2 overflow-x-auto overflow-y-hidden gap-3">
+        <div class="ribbon-group min-w-[90px]">
+          <div class="flex items-center justify-center h-full">
+            <div onclick="toggleAiTaskPane(true)" class="ribbon-btn flex flex-col items-center px-2 py-1 cursor-pointer">
+              <span class="w-6 h-6 rounded-full bg-[#0078d4] text-white flex items-center justify-center font-bold text-sm">?</span>
+              <span class="text-[11px] mt-1 font-semibold">Help & AI</span>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Help</div>
+        </div>
+
+        <div class="ribbon-group border-r-0 flex-1">
+          <div class="flex items-center gap-3 h-full pt-1">
+            <div class="flex flex-col gap-1 w-64">
+              <label class="text-[10px] font-semibold text-[#107c41]">GEMINI_API_KEY (Lưu tự động):</label>
+              <input id="geminiKeyInput" type="password" oninput="saveApiKey(this.value)" placeholder="Dán khóa AIzaSy... vào đây"
+                class="h-[24px] px-2 rounded border border-[#d2d0ce] text-xs font-mono bg-[#faf9f8] focus:bg-white focus:outline-none focus:border-[#107c41]" />
+            </div>
+
+            <div class="flex flex-col gap-1 flex-1 max-w-md">
+              <label class="text-[10px] font-semibold text-[#605e5c]">Yêu cầu bổ sung cho AI (Tùy chọn):</label>
+              <input id="geminiPromptInput" type="text" placeholder="Ví dụ: Kiểm tra lại các câu đạo hàm bậc 2 và định thức..."
+                class="h-[24px] px-2 rounded border border-[#d2d0ce] text-xs bg-[#faf9f8] focus:bg-white focus:outline-none focus:border-[#107c41]" />
+            </div>
+
+            <div class="flex items-center gap-2 pt-3">
+              <button onclick="runGeminiCheck()" class="h-[28px] px-3 rounded bg-[#107c41] hover:bg-[#0c5e31] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer">
+                <span>✨ Chạy Đối Soát AI</span>
+              </button>
+              <button onclick="toggleAiTaskPane()" class="h-[28px] px-2.5 rounded bg-[#f3f2f1] hover:bg-[#e1dfdd] border border-[#d2d0ce] text-[#323130] text-xs cursor-pointer">
+                Mở Khung Kết Quả AI
+              </button>
+            </div>
+          </div>
+          <div class="ribbon-group-title">Cấu Hình Gemini API & Đối Soát Đáp Án (Help)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- C. FORMULA BAR (Tự động thích ứng cho cả Desktop & Mobile)                -->
+    <!-- ========================================================================= -->
+    <div class="h-[32px] md:h-[28px] bg-[#f3f2f1] px-2 py-1 md:py-0 md:pb-1 flex items-center gap-1.5 shrink-0 border-b md:border-b-0 border-[#d2d0ce]">
+      <!-- Name Box -->
+      <div onclick="jumpToNextGreenCell()" title="Chạm để nhảy tới ô đáp án xanh lá tiếp theo" class="h-full w-[64px] md:w-[76px] bg-white border border-[#d2d0ce] rounded-xs px-2 flex items-center justify-between text-xs text-[#107c41] md:text-[#323130] font-bold md:font-normal cursor-pointer shrink-0">
+        <span id="activeCellBox">A1</span>
+        <span class="text-[9px] text-[#605e5c]">▾</span>
+      </div>
+
+      <!-- Formula Icons (×, ✓, fx) -->
+      <div class="h-full bg-white border border-[#d2d0ce] rounded-xs px-2 flex items-center gap-2 text-xs text-[#a19f9d] shrink-0">
+        <span class="hidden md:inline cursor-default">×</span>
+        <span class="hidden md:inline cursor-default">✓</span>
+        <span class="italic font-serif font-semibold text-[#107c41] md:text-[#323130]">fx</span>
+      </div>
+
+      <!-- Formula Input / Viewer Box -->
+      <div class="h-full flex-1 bg-white border border-[#d2d0ce] rounded-xs px-2.5 flex items-center justify-between overflow-x-auto">
+        <div id="activeFormulaBox" class="text-xs text-[#323130] whitespace-nowrap select-text w-full">Chạm vào ô bất kỳ để xem đáp án và công thức</div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- D. MAIN WORKSPACE: SPREADSHEET + DESKTOP AI TASK PANE                     -->
+    <!-- ========================================================================= -->
+    <div id="dropZone" class="flex-1 flex overflow-hidden relative bg-white border-t border-[#d2d0ce]">
+      <!-- Spreadsheet Scroll Container -->
+      <div id="gridScrollContainer" class="flex-1 overflow-auto relative" style="-webkit-overflow-scrolling: touch;">
+        <table id="excelTable" class="excel-grid"></table>
+      </div>
+
+      <!-- Floating Mobile Quick-Jump Green Cell Button -->
+      <button onclick="jumpToNextGreenCell()" class="mobile-only fixed bottom-[70px] right-4 z-25 h-10 px-3.5 rounded-full bg-[#107c41] text-white shadow-lg border border-white/30 items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#92D050] border border-white"></span>
+        <span>Ô Xanh Tiếp ➔</span>
+      </button>
+
+      <!-- Right-side Excel Task Pane for AI Verification Results (Desktop) -->
+      <aside id="aiTaskPane" class="hidden w-[350px] bg-[#faf9f8] border-l border-[#d2d0ce] flex-col shrink-0 shadow-lg z-30">
+        <div class="h-9 px-3 bg-[#f3f2f1] border-b border-[#d2d0ce] flex items-center justify-between">
+          <span class="text-xs font-semibold text-[#323130] flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#107c41]"></span>
+            Kết Quả Đối Soát Gemini AI
+          </span>
+          <button onclick="toggleAiTaskPane(false)" class="text-[#605e5c] hover:text-[#323130] text-sm font-bold px-1 cursor-pointer">✕</button>
+        </div>
+        <div class="p-3 flex-1 overflow-y-auto space-y-3 text-xs">
+          <div id="aiResultBox" class="p-3 rounded bg-white border border-[#e1dfdd] text-[#323130] whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
+            Chưa có dữ liệu đối soát. Hãy vào tab Help -> Nhập GEMINI_API_KEY và bấm "Chạy Đối Soát AI".
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- E. DESKTOP SHEET TABS & STATUS BAR (>= 768px)                             -->
+    <!-- ========================================================================= -->
+    <div class="desktop-only h-[26px] bg-[#f3f2f1] border-t border-[#d2d0ce] items-center justify-between px-2 shrink-0 text-xs select-none">
+      <div class="flex items-center gap-1 h-full">
+        <div class="flex items-center gap-2 text-[#a19f9d] px-1 text-[10px]">
+          <span>◀</span>
+          <span>▶</span>
+        </div>
+        <div class="h-[22px] px-3 bg-white border-x border-t border-[#d2d0ce] rounded-t-xs flex items-center justify-center font-semibold text-[#107c41] relative">
+          <span id="sheetTabName">Sheet1</span>
+          <span class="absolute bottom-0 left-1 right-1 h-[2px] bg-[#107c41]"></span>
+        </div>
+        <button onclick="openFilePicker()" title="Mở file Excel mới (File -> Open)" class="w-5 h-5 rounded-full hover:bg-[#e1dfdd] flex items-center justify-center text-[#323130] font-semibold ml-1 cursor-pointer">+</button>
+      </div>
+
+      <div class="flex items-center gap-1 w-1/2 max-w-[600px] pl-4">
+        <span class="text-[#605e5c] text-[10px]">⋮</span>
+        <span class="text-[#605e5c] text-[9px] px-1">◀</span>
+        <div class="flex-1 h-[12px] bg-[#e1dfdd] rounded-full p-0.5 flex items-center">
+          <div class="w-3/5 h-full bg-[#a19f9d] rounded-full"></div>
+        </div>
+        <span class="text-[#605e5c] text-[9px] px-1">▶</span>
+      </div>
+    </div>
+
+    <footer class="desktop-only h-[22px] bg-[#f3f2f1] border-t border-[#e1dfdd] px-2 items-center justify-between text-[11px] text-[#323130] shrink-0 select-none">
+      <div class="flex items-center gap-4">
+        <span id="statusReadyText">Ready</span>
+        <span class="flex items-center gap-1 text-[#605e5c]">
+          <span>♿</span>
+          <span>Accessibility: Good to go</span>
+        </span>
+        <span id="greenCountBadge" class="hidden font-semibold text-[#107c41]"></span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-[#605e5c]">
+          <span class="px-1 bg-[#e1dfdd] text-[#107c41] rounded-xs">⊞</span>
+          <span>◫</span>
+          <span>▤</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="setGridZoom(Math.max(70, currentZoom - 10))" class="text-[#605e5c] hover:text-black px-1 cursor-pointer">─</button>
+          <span id="zoomLabelDesktop" class="w-9 text-center">100%</span>
+          <button onclick="setGridZoom(Math.min(140, currentZoom + 10))" class="text-[#605e5c] hover:text-black px-1 cursor-pointer">+</button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ========================================================================= -->
+    <!-- F. MOBILE BOTTOM NAVIGATION BAR (< 768px hoặc chế độ Điện thoại)          -->
+    <!-- ========================================================================= -->
+    <nav class="mobile-only h-[56px] bg-white border-t border-[#d2d0ce] items-center justify-around px-1 shrink-0 z-30 shadow-lg">
+      <button onclick="closeMobileSheet()" class="flex flex-col items-center justify-center py-1 px-2 text-[#107c41] font-semibold">
+        <span class="text-base leading-none">⊞</span>
+        <span class="text-[10px] mt-1">Bảng tính</span>
+      </button>
+      <button onclick="openMobileSheet('file')" class="flex flex-col items-center justify-center py-1 px-2 text-[#323130] active:text-[#107c41]">
+        <span class="text-base leading-none">📂</span>
+        <span class="text-[10px] mt-1 font-medium">File ➔ Open</span>
+      </button>
+      <button onclick="openMobileSheet('mssv')" class="flex flex-col items-center justify-center py-1 px-2 text-[#323130] active:text-[#107c41]">
+        <span class="text-base leading-none">🎓</span>
+        <span class="text-[10px] mt-1 font-medium">MSSV & Lọc</span>
+      </button>
+      <button onclick="openMobileSheet('help')" class="flex flex-col items-center justify-center py-1 px-2 text-[#323130] active:text-[#107c41] relative">
+        <span class="text-base leading-none">✨</span>
+        <span class="text-[10px] mt-1 font-medium">Help (API)</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-[#107c41] absolute top-1 right-3"></span>
+      </button>
+    </nav>
+
+    <!-- ========================================================================= -->
+    <!-- G. MOBILE BOTTOM DRAWER SHEETS (File->Open, MSSV, Help->API)              -->
+    <!-- ========================================================================= -->
+    <div id="mobileOverlay" onclick="closeMobileSheet()" class="hidden absolute inset-0 bg-black/45 z-40 backdrop-blur-[1px]"></div>
+
+    <div id="mobileBottomSheet" class="hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl border-t border-[#d2d0ce] z-50 max-h-[82%] flex flex-col overflow-hidden">
+      <!-- Handle bar -->
+      <div class="pt-2 pb-1 flex justify-center shrink-0" onclick="closeMobileSheet()">
+        <div class="w-10 h-1.5 rounded-full bg-slate-300"></div>
+      </div>
+
+      <!-- Sheet Header -->
+      <div class="px-4 py-2.5 border-b border-[#e1dfdd] flex items-center justify-between shrink-0">
+        <h3 id="mobileSheetTitle" class="font-bold text-sm text-[#107c41]">Menu</h3>
+        <button onclick="closeMobileSheet()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- Sheet Content 1: FILE -> OPEN -->
+      <div id="mobileSheetFile" class="hidden p-4 space-y-2.5 overflow-y-auto text-xs">
+        <button onclick="openFilePicker(); closeMobileSheet();" class="w-full p-3.5 rounded-xl bg-[#107c41] text-white font-bold flex items-center gap-3 shadow-md active:scale-[0.99]">
+          <span class="text-xl">📂</span>
+          <div class="text-left">
+            <div class="text-sm">Open... (Tải File Excel lên)</div>
+            <div class="text-[11px] text-emerald-100 font-normal">Hỗ trợ .xlsx, .xlsm tự động điền ô xanh lá</div>
+          </div>
+        </button>
+
+        <button onclick="exportFilledExcel(); closeMobileSheet();" class="w-full p-3.5 rounded-xl bg-[#92D050]/25 border border-[#107c41]/30 text-slate-900 font-bold flex items-center gap-3">
+          <span class="text-xl">💾</span>
+          <div class="text-left">
+            <div class="text-sm text-[#107c41]">Save / Xuất File Đã Điền (.xlsx)</div>
+            <div class="text-[11px] text-slate-600 font-normal">Lưu bảng tính với đầy đủ đáp án theo MSSV</div>
+          </div>
+        </button>
+
+        <button onclick="resetApp(); closeMobileSheet();" class="w-full p-3 rounded-xl bg-slate-100 text-slate-700 font-semibold flex items-center gap-3">
+          <span class="text-lg">🔄</span>
+          <div class="text-left">
+            <div>New / Làm mới về Book1</div>
+            <div class="text-[11px] text-slate-500 font-normal">Xóa dữ liệu đang mở</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Sheet Content 2: MSSV & CÔNG CỤ BẢNG TÍNH -->
+      <div id="mobileSheetMssv" class="hidden p-4 space-y-4 overflow-y-auto text-xs">
+        <div class="space-y-1.5">
+          <label class="font-bold text-slate-700 block">Chọn sinh viên (MSSV có sẵn trong file):</label>
+          <select id="mobileMssvSelect" onchange="onMssvChange(this.value); closeMobileSheet();" class="w-full h-10 px-3 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 text-xs focus:outline-none focus:border-[#107c41]">
+            <option value="">(Chưa tải file Excel)</option>
+          </select>
+        </div>
+
+        <form onsubmit="handleMobileCustomMssv(event)" class="space-y-1.5">
+          <label class="font-bold text-slate-700 block">Hoặc nhập MSSV bất kỳ cần tra cứu:</label>
+          <div class="flex gap-2">
+            <input id="mobileCustomMssvInput" type="text" placeholder="Nhập MSSV..." class="flex-1 h-10 px-3 rounded-xl border border-slate-300 text-xs font-mono focus:outline-none focus:border-[#107c41]" />
+            <button type="submit" class="px-4 h-10 rounded-xl bg-[#107c41] text-white font-bold">Điền</button>
+          </div>
+        </form>
+
+        <div class="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2.5">
+          <button onclick="toggleCompareOld(); closeMobileSheet();" class="p-3 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-800 text-center">
+            🔍 So sánh bài cũ
+          </button>
+          <button onclick="toggleCheckerRows(); closeMobileSheet();" class="p-3 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-800 text-center">
+            👁 Hiện/Ẩn chấm ẩn
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+          <span class="font-semibold text-slate-700">Thu phóng bảng tính:</span>
+          <div class="flex items-center gap-2">
+            <button onclick="setGridZoom(75)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 font-semibold">75%</button>
+            <button onclick="setGridZoom(100)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 font-semibold">100%</button>
+            <button onclick="setGridZoom(125)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 font-semibold">125%</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sheet Content 3: HELP -> CẤU HÌNH GEMINI API & ĐỐI SOÁT AI -->
+      <div id="mobileSheetHelp" class="hidden p-4 space-y-3 overflow-y-auto text-xs">
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+          <div class="font-bold">Help & Cấu hình Gemini API</div>
+          <div class="text-[11px] text-emerald-700 mt-0.5">Kiểm tra chéo công thức và đối soát đáp án các ô màu xanh lá bằng Gemini 2.5 Flash.</div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="font-bold text-slate-700 block">GEMINI_API_KEY:</label>
+          <input id="mobileGeminiKeyInput" type="password" oninput="saveApiKey(this.value)" placeholder="Dán khóa AIzaSy... vào đây"
+            class="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-[#107c41]" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="font-bold text-slate-700 block">Yêu cầu bổ sung (tùy chọn):</label>
+          <input id="mobileGeminiPromptInput" type="text" placeholder="Ví dụ: Kiểm tra kỹ câu đạo hàm và tích phân..."
+            class="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-[#107c41]" />
+        </div>
+
+        <button onclick="runGeminiCheck()" class="w-full h-10 rounded-xl bg-[#107c41] text-white font-bold shadow flex items-center justify-center gap-1.5">
+          <span>✨ Chạy Đối Soát AI Ngay</span>
+        </button>
+
+        <div id="mobileAiResultBox" class="p-3 rounded-xl bg-slate-900 text-emerald-300 font-mono text-[11px] whitespace-pre-wrap max-h-56 overflow-y-auto">
+          Kết quả đối soát AI sẽ hiển thị tại đây...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+let currentReport = null;
+let activeMssv = '';
+let originalMssv = '';
+let showCheckerValues = false;
+let compareOldMode = false;
+let currentGridData = new Map();
+let selectedCellRef = 'A1';
+let currentZoom = 100;
+let viewMode = 'auto'; // 'auto' | 'mobile' | 'desktop'
+let greenCellRefsList = [];
+let currentGreenIndex = -1;
+
+const fileInputEl = document.getElementById('fileInput');
+const dropZoneEl = document.getElementById('dropZone');
+
+// Đồng bộ khóa API giữa Desktop và Mobile
+let savedKey = '';
+try { savedKey = localStorage.getItem('GEMINI_API_KEY') || ''; } catch (e) {}
+document.getElementById('geminiKeyInput').value = savedKey;
+document.getElementById('mobileGeminiKeyInput').value = savedKey;
+
+function saveApiKey(val) {
+  const clean = val.trim();
+  try { localStorage.setItem('GEMINI_API_KEY', clean); } catch (e) {}
+  document.getElementById('geminiKeyInput').value = clean;
+  document.getElementById('mobileGeminiKeyInput').value = clean;
+}
+
+// Chuyển đổi chế độ hiển thị: Tự động Responsive <-> Giả lập Điện thoại <-> Máy tính
+function cycleViewMode() {
+  document.body.classList.remove('force-mobile', 'force-desktop');
+  const label = document.getElementById('viewModeLabel');
+  if (viewMode === 'auto') {
+    viewMode = 'mobile';
+    document.body.classList.add('force-mobile');
+    if (label) label.textContent = 'Chế độ: Điện thoại';
+    showToast('Đang xem giao diện App Điện thoại (Nhấn 💻 ở góc phải trên để chuyển lại)');
+  } else if (viewMode === 'mobile') {
+    viewMode = 'desktop';
+    document.body.classList.add('force-desktop');
+    if (label) label.textContent = 'Chế độ: Máy tính';
+    showToast('Đang xem giao diện Excel Máy tính');
+  } else {
+    viewMode = 'auto';
+    if (label) label.textContent = 'Responsive: Tự động';
+    showToast('Đã bật chế độ Responsive Tự động theo màn hình');
+  }
+}
+
+function setGridZoom(zoomVal) {
+  currentZoom = zoomVal;
+  const table = document.getElementById('excelTable');
+  table.style.zoom = (zoomVal / 100);
+  const lbl = document.getElementById('zoomLabelDesktop');
+  if (lbl) lbl.textContent = zoomVal + '%';
+}
+
+// Điều khiển Mobile Bottom Sheet
+function openMobileSheet(type) {
+  document.getElementById('mobileOverlay').classList.remove('hidden');
+  document.getElementById('mobileBottomSheet').classList.remove('hidden');
+  document.getElementById('mobileSheetFile').classList.add('hidden');
+  document.getElementById('mobileSheetMssv').classList.add('hidden');
+  document.getElementById('mobileSheetHelp').classList.add('hidden');
+
+  const titleEl = document.getElementById('mobileSheetTitle');
+  if (type === 'file') {
+    titleEl.textContent = 'File ➔ Open / Save';
+    document.getElementById('mobileSheetFile').classList.remove('hidden');
+  } else if (type === 'mssv') {
+    titleEl.textContent = 'Chọn MSSV & Công cụ hiển thị';
+    document.getElementById('mobileSheetMssv').classList.remove('hidden');
+  } else if (type === 'help') {
+    titleEl.textContent = 'Help ➔ Cấu hình Gemini API';
+    document.getElementById('mobileSheetHelp').classList.remove('hidden');
+  }
+}
+
+function closeMobileSheet() {
+  document.getElementById('mobileOverlay').classList.add('hidden');
+  document.getElementById('mobileBottomSheet').classList.add('hidden');
+}
+
+// Toast Notification
+function showToast(msg, autoHide = true) {
+  const banner = document.getElementById('toastBanner');
+  document.getElementById('toastText').textContent = msg;
+  banner.classList.remove('hidden');
+  if (autoHide) {
+    setTimeout(() => {
+      banner.classList.add('hidden');
+    }, 3200);
+  }
+}
+function hideToast() {
+  document.getElementById('toastBanner').classList.add('hidden');
+}
+
+// Điều khiển Menu File -> Open trên Desktop
+function toggleFileMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('fileMenuDropdown');
+  menu.classList.toggle('hidden');
+}
+function closeFileMenu() {
+  document.getElementById('fileMenuDropdown').classList.add('hidden');
+}
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('fileMenuDropdown');
+  if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
+
+// Chuyển đổi giữa tab Home và tab Help (chứa API) trên Desktop
+function switchRibbonTab(tabName) {
+  closeFileMenu();
+  document.querySelectorAll('.ribbon-tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+  if (tabName === 'help') {
+    document.getElementById('menuTab_help').classList.add('tab-active');
+    document.getElementById('ribbonHome').classList.add('hidden');
+    document.getElementById('ribbonHelp').classList.remove('hidden');
+    document.getElementById('ribbonHelp').classList.add('flex');
+  } else {
+    document.getElementById('menuTab_home').classList.add('tab-active');
+    document.getElementById('ribbonHelp').classList.add('hidden');
+    document.getElementById('ribbonHelp').classList.remove('flex');
+    document.getElementById('ribbonHome').classList.remove('hidden');
+  }
+}
+
+function toggleAiTaskPane(forceState) {
+  const pane = document.getElementById('aiTaskPane');
+  const show = typeof forceState === 'boolean' ? forceState : pane.classList.contains('hidden');
+  pane.classList.toggle('hidden', !show);
+  pane.classList.toggle('flex', show);
+}
+
+function openFilePicker() {
+  fileInputEl.value = '';
+  fileInputEl.click();
+}
+
+fileInputEl.addEventListener('change', function(e) {
+  if (e.target.files && e.target.files.length > 0) {
+    processExcelFile(e.target.files[0]);
+  }
+});
+
+// Kéo thả file trực tiếp vào bảng Excel
+dropZoneEl.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+});
+dropZoneEl.addEventListener('drop', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    processExcelFile(e.dataTransfer.files[0]);
+  }
+});
+
+function colLetterToOneBased(col) {
+  let index = 0;
+  const clean = col.toUpperCase().replace(/[^A-Z]/g, '');
+  for (let i = 0; i < clean.length; i++) index = index * 26 + (clean.charCodeAt(i) - 64);
+  return index;
+}
+
+function oneBasedToColLetter(index) {
+  let letter = '';
+  let temp = index - 1;
+  while (temp >= 0) {
+    letter = String.fromCharCode((temp % 26) + 65) + letter;
+    temp = Math.floor(temp / 26) - 1;
+  }
+  return letter;
+}
+
+function decodeXml(str) {
+  if (!str) return '';
+  return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+            .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)))
+            .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+function escapeXml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function isGreenHex(hex) {
+  if (!hex || hex.startsWith('THEME_')) return false;
+  const clean = hex.toUpperCase();
+  if (['92D050','00B050','A9D08E','C6E0B4','E2EFDA','70AD47','00FF00','CCFFCC'].includes(clean)) return true;
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0,2),16), g = parseInt(clean.slice(2,4),16), b = parseInt(clean.slice(4,6),16);
+    return g > 140 && g > r + 25 && g > b + 25;
+  }
+  return false;
+}
+
+// Vẽ lưới Excel mặc định (Book1 trống từ A -> AC, dòng 1 -> 40)
+function renderBlankExcelGrid() {
+  const table = document.getElementById('excelTable');
+  const totalCols = 29;
+  const totalRows = 40;
+  currentGridData = new Map();
+  greenCellRefsList = [];
+
+  let html = `<thead><tr><th class="w-[36px] min-w-[36px] sticky left-0 z-30 bg-[#f3f2f1] border border-[#d2d0ce] text-right pr-1 text-[10px] text-[#a19f9d]">◢</th>`;
+  for (let c = 1; c <= totalCols; c++) {
+    const colLetter = oneBasedToColLetter(c);
+    const isHighlight = colLetter === 'A' ? 'header-highlight' : '';
+    html += `<th id="colHdr_${colLetter}" class="w-[64px] min-w-[64px] ${isHighlight}">${colLetter}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for (let r = 1; r <= totalRows; r++) {
+    const isRowHighlight = r === 1 ? 'row-highlight' : '';
+    html += `<tr class="h-[22px]">`;
+    html += `<td id="rowHdr_${r}" class="row-header ${isRowHighlight}">${r}</td>`;
+    for (let c = 1; c <= totalCols; c++) {
+      const colLetter = oneBasedToColLetter(c);
+      const ref = colLetter + r;
+      const isA1 = ref === 'A1' ? 'cell-selected' : '';
+      currentGridData.set(ref, { cellRef: ref, displayVal: '', formulaVal: '', isGreen: false, isMssv: false, oldVal: '' });
+      html += `<td id="cell_${ref}" onclick="selectCell('${ref}')" class="cursor-cell ${isA1}"></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody>`;
+  table.innerHTML = html;
+  selectedCellRef = 'A1';
+  document.getElementById('activeCellBox').textContent = 'A1';
+  document.getElementById('activeFormulaBox').textContent = 'Vào File -> Open để tải file Excel (.xlsx / .xlsm)';
+}
+
+async function parseStyleFills(zip) {
+  const map = new Map();
+  const xml = await zip.file('xl/styles.xml')?.async('string');
+  if (!xml) return map;
+  const fillsMatch = xml.match(/<fills\b[^>]*>([\s\S]*?)<\/fills>/);
+  const fillColors = [];
+  if (fillsMatch) {
+    const fillRegex = /<fill\b[^>]*>([\s\S]*?)<\/fill>/g;
+    let m;
+    while ((m = fillRegex.exec(fillsMatch[1])) !== null) {
+      const rgb = m[1].match(/<fgColor\b[^>]*rgb="([0-9A-Fa-f]{6,8})"/);
+      const theme = m[1].match(/<fgColor\b[^>]*theme="(\d+)"/);
+      if (rgb) {
+        const raw = rgb[1].toUpperCase();
+        fillColors.push(raw.length === 8 ? raw.slice(2) : raw);
+      } else if (theme) fillColors.push('THEME_' + theme[1]);
+      else fillColors.push('');
+    }
+  }
+  const xfsMatch = xml.match(/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/);
+  if (xfsMatch) {
+    const xfRegex = /<xf\b([^>]*?)(?:\/>|>[\s\S]*?<\/xf>)/g;
+    let m, idx = 0;
+    while ((m = xfRegex.exec(xfsMatch[1])) !== null) {
+      const fid = m[1].match(/fillId="(\d+)"/);
+      if (fid && fillColors[parseInt(fid[1],10)]) map.set(idx, fillColors[parseInt(fid[1],10)]);
+      idx++;
+    }
+  }
+  return map;
+}
+
+function parseSharedStrings(xml) {
+  const res = [];
+  if (!xml) return res;
+  const siRegex = /<si\b[^>]*>([\s\S]*?)<\/si>/g;
+  let m;
+  while ((m = siRegex.exec(xml)) !== null) {
+    const tRegex = /<t\b[^>]*>([\s\S]*?)<\/t>/g;
+    let tm, parts = [];
+    while ((tm = tRegex.exec(m[1])) !== null) parts.push(decodeXml(tm[1]));
+    res.push(parts.join(''));
+  }
+  return res;
+}
+
+async function processExcelFile(file) {
+  if (typeof JSZip === 'undefined') {
+    showToast('Không thể tải thư viện JSZip. Vui lòng kiểm tra kết nối mạng!');
+    return;
+  }
+  showToast('Đang giải mã cấu trúc OpenXML và trích xuất đáp án...', false);
+  try {
+    const buffer = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+    const sstXml = await zip.file('xl/sharedStrings.xml')?.async('string');
+    const sharedStrings = parseSharedStrings(sstXml);
+    const styleToFillHex = await parseStyleFills(zip);
+
+    const extFiles = Object.keys(zip.files).filter(n => n.startsWith('xl/externalLinks/externalLink') && n.endsWith('.xml') && !n.includes('_rels'));
+    const externalLinks = [];
+    for (const extPath of extFiles) {
+      const xml = await zip.file(extPath)?.async('string');
+      if (!xml) continue;
+      const cachedCells = [];
+      const sheetNamesExt = [...xml.matchAll(/<sheetName\b[^>]*val="([^"]*)"/g)].map(x => decodeXml(x[1]));
+      const sdRegex = /<sheetData\b([^>]*?)(?:\/>|>([\s\S]*?)<\/sheetData>)/g;
+      let sdm;
+      while ((sdm = sdRegex.exec(xml)) !== null) {
+        if (sdm[2] === undefined) continue; // sheetData rỗng (tự đóng thẻ)
+        const sid = parseInt((sdm[1].match(/sheetId="(\d+)"/) || [0, 0])[1], 10);
+        const cellRegex = /<cell\b([^>]*?)(?:\/>|>([\s\S]*?)<\/cell>)/g;
+        let cm;
+        while ((cm = cellRegex.exec(sdm[2])) !== null) {
+          const rm = cm[1].match(/\br="([A-Z]+)(\d+)"/);
+          if (!rm) continue;
+          const col = rm[1], row = parseInt(rm[2], 10);
+          const tm = cm[1].match(/\bt="([^"]+)"/);
+          const vm = (cm[2] || '').match(/<v>([\s\S]*?)<\/v>/);
+          let val = vm ? decodeXml(vm[1].trim()) : '';
+          if (tm && tm[1] === 's' && sharedStrings[parseInt(val,10)] !== undefined) val = sharedStrings[parseInt(val,10)];
+          cachedCells.push({ col, row, cellRef: col + row, value: val, sheetId: sid, sheetName: sheetNamesExt[sid] || '' });
+        }
+      }
+      externalLinks.push({ cachedCells, sheetNames: [...xml.matchAll(/<sheetName\b[^>]*val="([^"]*)"/g)].map(x => decodeXml(x[1])) });
+    }
+
+    const wbXml = await zip.file('xl/workbook.xml')?.async('string') || '';
+    const sheetMatch = wbXml.match(/<sheet\b[^>]*name="([^"]+)"[^>]*r:id="([^"]+)"/);
+    const sheetName = sheetMatch ? decodeXml(sheetMatch[1]) : 'TEST 1';
+    const wbRels = await zip.file('xl/_rels/workbook.xml.rels')?.async('string') || '';
+    const sheetRid = sheetMatch ? sheetMatch[2] : 'rId1';
+    let sheetPath = 'xl/worksheets/sheet1.xml';
+    for (const rel of wbRels.matchAll(/<Relationship\b([^>]*?)\/?>/g)) {
+      const idM = rel[1].match(/\bId="([^"]+)"/), tgM = rel[1].match(/\bTarget="([^"]+)"/);
+      if (idM && tgM && idM[1] === sheetRid) { sheetPath = 'xl/' + tgM[1].replace(/^\/?(xl\/)?/, ''); break; }
+    }
+    const sheetXml = await zip.file(sheetPath)?.async('string') || '';
+
+    const rowHeights = new Map();
+    const rowTagRegex = /<row\b([^>]*)>/g;
+    let rtm;
+    while ((rtm = rowTagRegex.exec(sheetXml)) !== null) {
+      const rAttr = rtm[1].match(/\br="(\d+)"/);
+      const htAttr = rtm[1].match(/\bht="([\d.]+)"/);
+      if (rAttr && htAttr) {
+        rowHeights.set(parseInt(rAttr[1], 10), parseFloat(htAttr[1]));
+      }
+    }
+
+    const mergedRanges = [];
+    const mergedSubCells = new Set();
+    const mergeRegex = /<mergeCell\b[^>]*ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"/g;
+    let mm;
+    while ((mm = mergeRegex.exec(sheetXml)) !== null) {
+      const c1 = colLetterToOneBased(mm[1]) - 1, r1 = parseInt(mm[2], 10);
+      const c2 = colLetterToOneBased(mm[3]) - 1, r2 = parseInt(mm[4], 10);
+      mergedRanges.push({ startRow: r1, endRow: r2, startColIndex: c1, endColIndex: c2, rowSpan: r2 - r1 + 1, colSpan: c2 - c1 + 1 });
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          if (r === r1 && c === c1) continue;
+          mergedSubCells.add(oneBasedToColLetter(c + 1) + r);
+        }
+      }
+    }
+
+    const sheetCells = new Map();
+    let maxRow = 10, maxColIdx = 5;
+    const cellTagRegex = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let cm;
+    while ((cm = cellTagRegex.exec(sheetXml)) !== null) {
+      const attrs = cm[1], body = cm[2] || '';
+      const rm = attrs.match(/\br="([A-Z]+)(\d+)"/);
+      if (!rm) continue;
+      const col = rm[1], row = parseInt(rm[2], 10), colIdx = colLetterToOneBased(col);
+      const cellRef = col + row;
+      const tm = attrs.match(/\bt="([^"]+)"/), sm = attrs.match(/\bs="(\d+)"/);
+      const styleIndex = sm ? parseInt(sm[1], 10) : undefined;
+      const fillHex = styleIndex !== undefined ? styleToFillHex.get(styleIndex) : undefined;
+      const isGreenFill = isGreenHex(fillHex) && !mergedSubCells.has(cellRef);
+      const fm = body.match(/<f\b[^>]*>([\s\S]*?)<\/f>/), vm = body.match(/<v>([\s\S]*?)<\/v>/);
+      const formula = fm ? decodeXml(fm[1].trim()) : '';
+      let val = vm ? decodeXml(vm[1].trim()) : '';
+      if (tm && tm[1] === 's' && sharedStrings[parseInt(val,10)] !== undefined) val = sharedStrings[parseInt(val,10)];
+
+      if (formula || val !== '' || isGreenFill) {
+        if (row > maxRow) maxRow = row;
+        if (colIdx > maxColIdx) maxColIdx = colIdx;
+      }
+      if (formula || val !== '' || (fillHex && !fillHex.startsWith('THEME_0'))) {
+        sheetCells.set(cellRef, { value: val, formula, fillHex, isGreenFill });
+      }
+    }
+
+    for (const rng of mergedRanges) {
+      if (rng.startRow <= maxRow && rng.endColIndex + 1 > maxColIdx) maxColIdx = rng.endColIndex + 1;
+    }
+
+    let mssvCellRef = 'B1';
+    let lookupRangeStartCol = 'B';
+    for (const [, cData] of sheetCells.entries()) {
+      const lm = (cData.formula || '').match(/VLOOKUP\s*\(\s*\$?([A-Z]+)\$?(\d+)\s*,\s*([^,]+)/i);
+      if (lm) {
+        mssvCellRef = (lm[1] + lm[2]).toUpperCase();
+        const rcm = lm[3].match(/!\$?([A-Z]+)\$?\d+/i);
+        if (rcm) lookupRangeStartCol = rcm[1].toUpperCase();
+        break;
+      }
+    }
+
+    let lookupSheetName = '';
+    for (const [, cData] of sheetCells.entries()) {
+      const sm2 = (cData.formula || '').match(/VLOOKUP\s*\([^!]*?'?\[\d+\]([^'!]+)'?!/i);
+      if (sm2) { lookupSheetName = sm2[1].trim(); break; }
+    }
+
+    const cachedStudents = [];
+    for (const ext of externalLinks) {
+      const rowMap = new Map();
+      for (const c of ext.cachedCells) {
+        if (lookupSheetName && c.sheetName && c.sheetName !== lookupSheetName) continue;
+        if (!rowMap.has(c.row)) rowMap.set(c.row, new Map());
+        rowMap.get(c.row).set(c.col, c.value);
+      }
+      const rows = Array.from(rowMap.keys()).sort((a,b) => a - b);
+      const mssvColIdx = colLetterToOneBased(lookupRangeStartCol);
+      const nameCol = oneBasedToColLetter(mssvColIdx + 1);
+      const classCol = oneBasedToColLetter(mssvColIdx + 2);
+      for (const rNum of rows) {
+        const colData = rowMap.get(rNum);
+        const mssvVal = colData.get(lookupRangeStartCol);
+        if (!mssvVal || /^(mssv|id|stt)$/i.test(mssvVal.trim())) continue;
+        const cellsByCol = {};
+        for (const [k, v] of colData.entries()) cellsByCol[k] = v;
+        cachedStudents.push({
+          mssv: mssvVal,
+          name: colData.get(nameCol) || '',
+          className: colData.get(classCol) || '',
+          cellsByCol
+        });
+      }
+    }
+
+    const greenTargetMap = new Map();
+    for (const [cellRef, cellData] of sheetCells.entries()) {
+      const f = cellData.formula || '';
+      if (!f) continue;
+      const vm = f.match(/VLOOKUP\s*\(\s*\$?([A-Z]+)\$?(\d+)\s*,\s*[^!]+!\$?([A-Z]+)\$?\d+:\$?[A-Z]+\$?\d+\s*,\s*(\d+)\s*(?:,\s*(?:0|FALSE))?\s*\)\s*=\s*(?:VALUE\s*\(\s*)?\$?([A-Z]+)\$?(\d+)\)?/i);
+      if (vm) {
+        const targetGreen = (vm[5] + vm[6]).toUpperCase();
+        greenTargetMap.set(targetGreen, {
+          checkerCellRef: cellRef,
+          formula: f,
+          lookupColIndex: parseInt(vm[4], 10),
+          lookupRangeStartCol: vm[3].toUpperCase()
+        });
+        continue;
+      }
+      if (!/\bNOW\s*\(/i.test(f)) {
+        const lk = f.match(/VLOOKUP\s*\(\s*\$?[A-Z]+\$?\d+\s*,\s*[^!]+!\$?([A-Z]+)\$?\d+:\$?[A-Z]+\$?\d+\s*,\s*(\d+)\s*(?:,\s*(?:0|FALSE))?\s*\)/i);
+        const vv = f.match(/VALUE\s*\(\s*\$?([A-Z]+)\$?(\d+)\s*\)/i);
+        if (lk && vv) {
+          const tg = (vv[1] + vv[2]).toUpperCase();
+          if (!greenTargetMap.has(tg)) {
+            greenTargetMap.set(tg, {
+              checkerCellRef: cellRef,
+              formula: f,
+              lookupColIndex: parseInt(lk[2], 10),
+              lookupRangeStartCol: lk[1].toUpperCase()
+            });
+          }
+          continue;
+        }
+      }
+      const cm = f.match(/^=?(-?\d+(?:[.,]\d+)?)\s*=\s*(?:VALUE\s*\(\s*)?\$?([A-Z]+)\$?(\d+)\)?$/i) ||
+                 f.match(/^=?(?:VALUE\s*\(\s*)?\$?([A-Z]+)\$?(\d+)\)?\s*=\s*(-?\d+(?:[.,]\d+)?)$/i);
+      if (cm) {
+        const isFirst = /^-?\d/.test(cm[1]);
+        const expectedConst = isFirst ? cm[1] : cm[3];
+        const targetGreen = isFirst ? (cm[2] + cm[3]).toUpperCase() : (cm[1] + cm[2]).toUpperCase();
+        greenTargetMap.set(targetGreen, {
+          checkerCellRef: cellRef,
+          formula: f,
+          constantExpected: expectedConst
+        });
+      }
+    }
+
+    currentReport = {
+      fileName: file.name,
+      originalBuffer: buffer,
+      sheetName,
+      sheetCells,
+      rowHeights,
+      mergedRanges,
+      maxRow: Math.max(Math.min(maxRow, 100), 38),
+      maxColIdx: Math.max(Math.min(maxColIdx, 30), 26),
+      mssvCellRef,
+      lookupRangeStartCol,
+      cachedStudents,
+      greenTargetMap,
+      sheetPath
+    };
+
+    const initMssv = sheetCells.get(mssvCellRef)?.value || cachedStudents[0]?.mssv || '';
+    activeMssv = initMssv;
+    originalMssv = initMssv;
+
+    populateMssvUI();
+    renderGrid();
+    selectCell(mssvCellRef);
+    showToast(`Đã tải "${file.name}" (${greenTargetMap.size} ô xanh lá)!`);
+  } catch (err) {
+    showToast('Lỗi khi đọc file Excel: ' + err.message);
+  }
+}
+
+function populateMssvUI() {
+  const selDesktop = document.getElementById('mssvSelect');
+  const selMobile = document.getElementById('mobileMssvSelect');
+  selDesktop.innerHTML = '';
+  selMobile.innerHTML = '';
+
+  for (const s of currentReport.cachedStudents) {
+    const label = `${s.mssv}${s.name ? ' - ' + s.name : ''}${s.className ? ' (' + s.className + ')' : ''}`;
+    const isSelected = String(s.mssv).toLowerCase() === String(activeMssv).toLowerCase();
+
+    const opt1 = document.createElement('option');
+    opt1.value = s.mssv;
+    opt1.textContent = label;
+    if (isSelected) opt1.selected = true;
+    selDesktop.appendChild(opt1);
+
+    const opt2 = document.createElement('option');
+    opt2.value = s.mssv;
+    opt2.textContent = label;
+    if (isSelected) opt2.selected = true;
+    selMobile.appendChild(opt2);
+  }
+
+  // Cập nhật Desktop UI
+  document.getElementById('windowTitleText').textContent = `${currentReport.fileName} - Excel`;
+  document.title = `${currentReport.fileName} - Excel`;
+  document.getElementById('sheetTabName').textContent = currentReport.sheetName;
+  const badge = document.getElementById('greenCountBadge');
+  badge.textContent = `Đã điền ${currentReport.greenTargetMap.size} Ô Đáp Án Xanh Lá (#92D050) | MSSV: ${activeMssv}`;
+  badge.classList.remove('hidden');
+
+  // Cập nhật Mobile UI
+  document.getElementById('mobileTitleText').textContent = currentReport.fileName;
+  const mobBadge = document.getElementById('mobileGreenBadge');
+  mobBadge.textContent = `${currentReport.greenTargetMap.size} Ô Xanh`;
+  mobBadge.classList.remove('hidden');
+  document.getElementById('mobileSubStatus').textContent = `Sheet: ${currentReport.sheetName} • Điểm 10/10`;
+  document.getElementById('mobileMssvPill').textContent = activeMssv || 'MSSV';
+}
+
+function onMssvChange(newMssv) {
+  if (!currentReport || !newMssv) return;
+  activeMssv = newMssv;
+  populateMssvUI();
+  renderGrid();
+  selectCell(currentReport.mssvCellRef);
+}
+
+function handleSearchSubmit(e) {
+  e.preventDefault();
+  const val = document.getElementById('topSearchInput').value.trim();
+  if (!val) return;
+  if (!currentReport) {
+    showToast('Vui lòng vào File -> Open để tải file Excel lên trước!');
+    return;
+  }
+  onMssvChange(val);
+  document.getElementById('topSearchInput').value = '';
+  showToast(`Đã chuyển sang MSSV: ${val}`);
+}
+
+function handleMobileCustomMssv(e) {
+  e.preventDefault();
+  const val = document.getElementById('mobileCustomMssvInput').value.trim();
+  if (!val) return;
+  if (!currentReport) {
+    showToast('Vui lòng mở file Excel trước!');
+    return;
+  }
+  onMssvChange(val);
+  document.getElementById('mobileCustomMssvInput').value = '';
+  closeMobileSheet();
+  showToast(`Đã điền MSSV: ${val}`);
+}
+
+function resetOriginalMssv() {
+  if (!currentReport) return;
+  onMssvChange(originalMssv);
+  showToast(`Đã quay về MSSV gốc: ${originalMssv}`);
+}
+
+function evaluateFormulaForStudent(formula, student, startColLetter) {
+  if (!student || !formula) return null;
+  const startIdx = colLetterToOneBased(startColLetter);
+  const vRegex = /VLOOKUP\s*\(\s*\$?[A-Z]+\$?\d+\s*,\s*[^,]+,\s*(\d+)\s*(?:,\s*(?:0|FALSE))?\s*\)/gi;
+  let hasMatch = false;
+  const replaced = formula.replace(vRegex, (_, cStr) => {
+    const colLetter = oneBasedToColLetter(startIdx + parseInt(cStr, 10) - 1);
+    const v = student.cellsByCol[colLetter];
+    if (v !== undefined) { hasMatch = true; return v; }
+    return '';
+  });
+  if (!hasMatch) return null;
+
+  const singleMatch = formula.match(/^(?:IFERROR\s*\(\s*)?(?:IF\s*\(\s*\$?[A-Z]+\$?\d+\s*,\s*)?VLOOKUP\s*\(\s*\$?[A-Z]+\$?\d+\s*,\s*[^,]+,\s*(\d+)\s*(?:,\s*(?:0|FALSE))?\s*\)/i);
+  if (singleMatch && !formula.includes('&')) {
+    const colLetter = oneBasedToColLetter(startIdx + parseInt(singleMatch[1], 10) - 1);
+    return student.cellsByCol[colLetter] ?? null;
+  }
+  if (formula.includes('&')) {
+    let expr = replaced.replace(/^=?IFERROR\s*\(\s*IF\s*\(\s*\$?[A-Z]+\$?\d+\s*,\s*/i, '')
+                       .replace(/\s*,\s*""\s*\)\s*,\s*""\s*\)\s*$/i, '');
+    return expr.split('&').map(p => {
+      const t = p.trim();
+      return (t.startsWith('"') && t.endsWith('"')) ? t.slice(1, -1) : t.replace('.', ',');
+    }).join('');
+  }
+  return null;
+}
+
+function renderGrid() {
+  if (!currentReport) {
+    renderBlankExcelGrid();
+    return;
+  }
+  const { sheetCells, rowHeights, mergedRanges, maxRow, maxColIdx, mssvCellRef, lookupRangeStartCol, cachedStudents, greenTargetMap } = currentReport;
+  const student = cachedStudents.find(s => String(s.mssv).trim().toLowerCase() === String(activeMssv).trim().toLowerCase());
+
+  const checkerSet = new Set();
+  for (const [, info] of greenTargetMap.entries()) checkerSet.add(info.checkerCellRef);
+
+  const mergeTopLeft = new Map();
+  const mergeHidden = new Set();
+  for (const rng of mergedRanges) {
+    const tl = oneBasedToColLetter(rng.startColIndex + 1) + rng.startRow;
+    mergeTopLeft.set(tl, rng);
+    for (let r = rng.startRow; r <= rng.endRow; r++) {
+      for (let c = rng.startColIndex; c <= rng.endColIndex; c++) {
+        if (r === rng.startRow && c === rng.startColIndex) continue;
+        mergeHidden.add(oneBasedToColLetter(c + 1) + r);
+      }
+    }
+  }
+
+  const colLetters = [];
+  for (let c = 1; c <= maxColIdx; c++) colLetters.push(oneBasedToColLetter(c));
+
+  const table = document.getElementById('excelTable');
+  let html = `<thead><tr><th class="w-[36px] min-w-[36px] sticky left-0 z-30 bg-[#f3f2f1] border border-[#d2d0ce] text-right pr-1 text-[10px] text-[#a19f9d]">◢</th>`;
+  for (const cl of colLetters) {
+    html += `<th id="colHdr_${cl}" class="w-[64px] min-w-[64px]">${cl}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  currentGridData = new Map();
+  greenCellRefsList = [];
+
+  let scoreVal = '';
+  const p2c = sheetCells.get('P2');
+  if (p2c && p2c.formula && /^IFERROR\s*\(\s*SUM\s*\(/i.test(p2c.formula)) {
+    const sArgs = (p2c.formula.match(/SUM\s*\(([^)]*)\)/i) || [0, ''])[1].split(',').map(a => a.trim().replace(/\$/g, ''));
+    let tot = 0, anyS = false;
+    for (const a of sArgs) {
+      const qc = sheetCells.get(a);
+      if (!qc || !qc.formula) continue;
+      const pts = Array.from(qc.formula.matchAll(/,\s*(\d+(?:\.\d+)?)\s*,\s*(?:0|"")\s*\)/g));
+      if (pts.length) { tot += pts.reduce((s, m) => s + parseFloat(m[1]), 0); anyS = true; }
+    }
+    if (anyS) scoreVal = String(tot);
+  }
+
+  for (let r = 1; r <= maxRow; r++) {
+    const ptHeight = rowHeights.get(r) || 21.95;
+    const isThinRow = ptHeight < 10;
+    const firstOrig = sheetCells.get('A' + r);
+    const isPurple = firstOrig?.fillHex === '7030A0';
+
+    const trHeightClass = isPurple
+      ? 'h-[18px] bg-[#7030A0]'
+      : (isThinRow && !showCheckerValues ? 'h-[6px]' : 'h-[28px]');
+
+    html += `<tr class="${trHeightClass}">`;
+    html += `<td id="rowHdr_${r}" class="row-header ${isThinRow && !showCheckerValues ? 'text-[0px] py-0' : ''}">${r}</td>`;
+
+    for (let c = 1; c <= maxColIdx; c++) {
+      const colLetter = oneBasedToColLetter(c);
+      const cellRef = colLetter + r;
+      if (mergeHidden.has(cellRef)) continue;
+
+      const mInfo = mergeTopLeft.get(cellRef);
+      const rSpan = mInfo ? mInfo.rowSpan : 1;
+      const cSpan = mInfo ? mInfo.colSpan : 1;
+      const orig = sheetCells.get(cellRef);
+      const checkerInfo = greenTargetMap.get(cellRef);
+      const isMssv = cellRef === mssvCellRef;
+      const isGreen = Boolean(checkerInfo || orig?.isGreenFill) && !isMssv;
+      const isCheckerCell = checkerSet.has(cellRef) || cellRef === 'R1' || cellRef === 'S1' || cellRef === 'S2';
+
+      if (isGreen) greenCellRefsList.push(cellRef);
+
+      let displayVal = '';
+      let formulaVal = orig?.formula || '';
+      const oldVal = orig?.value || '';
+
+      if (isMssv) {
+        displayVal = activeMssv;
+      } else if (checkerInfo) {
+        formulaVal = '=' + checkerInfo.formula;
+        if (checkerInfo.constantExpected !== undefined) displayVal = checkerInfo.constantExpected;
+        else if (checkerInfo.lookupColIndex !== undefined && student) {
+          const targetCol = oneBasedToColLetter(colLetterToOneBased(checkerInfo.lookupRangeStartCol || lookupRangeStartCol) + checkerInfo.lookupColIndex - 1);
+          displayVal = student.cellsByCol[targetCol] ?? oldVal;
+        } else displayVal = oldVal;
+      } else if (orig) {
+        displayVal = orig.value || '';
+        if (student && orig.formula) {
+          const ev = evaluateFormulaForStudent(orig.formula, student, lookupRangeStartCol);
+          if (ev !== null) displayVal = ev;
+        }
+        if (orig.formula) {
+          const lblM = orig.formula.trim().match(/^=?IFERROR\s*\(\s*IF\s*\(\s*\$R\$1\s*,\s*"([^"]*)"\s*,\s*""\s*\)\s*,\s*""\s*\)$/);
+          if (lblM) displayVal = lblM[1];
+          else if (/^=?\$?P\$?2$/.test(orig.formula.trim()) && scoreVal !== '') displayVal = scoreVal;
+        }
+        if (orig.formula) {
+          if (/^IFERROR\s*\(\s*SUM\s*\(/i.test(orig.formula)) {
+            const sumArgs = (orig.formula.match(/SUM\s*\(([^)]*)\)/i) || [0, ''])[1].split(',').map(a => a.trim().replace(/\$/g, ''));
+            let total = 0, anyQ = false;
+            for (const a of sumArgs) {
+              const qc = sheetCells.get(a);
+              if (!qc || !qc.formula) continue;
+              const pts = Array.from(qc.formula.matchAll(/,\s*(\d+(?:\.\d+)?)\s*,\s*(?:0|"")\s*\)/g));
+              if (pts.length) { total += pts.reduce((s, m) => s + parseFloat(m[1]), 0); anyQ = true; }
+            }
+            if (anyQ) displayVal = String(total);
+          }
+          else if (colLetter === 'Q' && orig.fillHex === 'FFF2CC') {
+            const pm = Array.from(orig.formula.matchAll(/,\s*(\d+(?:\.\d+)?)\s*,\s*(?:0|"")\s*\)/g));
+            if (pm.length > 0) displayVal = String(pm.reduce((a, m) => a + parseFloat(m[1]), 0));
+          }
+        }
+      }
+
+      currentGridData.set(cellRef, { cellRef, displayVal, formulaVal, isGreen, isMssv, oldVal });
+
+      const hideCellText = (isCheckerCell || (isThinRow && rSpan === 1)) && !showCheckerValues;
+
+      let cls = 'bg-white text-slate-900 border border-[#e1dfdd]';
+      const hex = orig?.fillHex?.toUpperCase();
+      if (isMssv) cls = 'bg-[#92D050] text-slate-950 font-bold border-2 border-red-600';
+      else if (isGreen) cls = 'bg-[#92D050] hover:bg-[#82c240] text-slate-950 font-bold border border-red-500';
+      else if (hex === '00B0F0') cls = 'bg-[#00B0F0] text-slate-950 font-bold border border-red-400';
+      else if (hex === 'DDEBF7') cls = 'bg-[#DDEBF7] text-blue-950 font-bold border border-red-400';
+      else if (hex === 'FFC000') cls = 'bg-[#FFC000] text-slate-950 font-semibold border border-red-400';
+      else if (hex === 'FFFF00') cls = 'bg-[#FFFF00] text-red-600 font-extrabold text-sm border-2 border-red-600';
+      else if (hex === 'FFF2CC') cls = 'bg-[#FFF2CC] text-red-600 font-bold border border-red-500';
+      else if (hex === '7030A0') cls = 'bg-[#7030A0] text-white border border-purple-900';
+      else if (hex === 'THEME_5' || hex === 'THEME_9') cls = 'bg-amber-100 text-slate-900 font-semibold border border-red-400';
+
+      const showDiff = compareOldMode && isGreen && oldVal !== '' && String(oldVal).trim() !== String(displayVal).trim();
+      const textAlignClass = (cSpan >= 10) ? 'text-left px-2' : 'text-center px-1';
+      const padClass = (isThinRow && rSpan === 1 && !showCheckerValues) ? 'py-0 leading-none' : 'py-0.5 leading-snug';
+
+      html += `<td id="cell_${cellRef}" rowspan="${rSpan}" colspan="${cSpan}" onclick="selectCell('${cellRef}')" class="loaded-font cursor-cell align-middle ${padClass} ${textAlignClass} ${cls}">`;
+      if (!isPurple && !hideCellText) {
+        html += `<div class="flex flex-col ${cSpan >= 10 ? 'items-start' : 'items-center'} justify-center">`;
+        html += `<span class="whitespace-pre-wrap break-words">${displayVal}</span>`;
+        if (showDiff) html += `<span class="text-[10px] line-through text-red-700 font-mono">Cũ: ${oldVal}</span>`;
+        html += `</div>`;
+      }
+      html += `</td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody>`;
+  table.innerHTML = html;
+}
+
+function selectCell(ref, scrollIntoView = false) {
+  document.querySelectorAll('.cell-selected').forEach(el => el.classList.remove('cell-selected'));
+  document.querySelectorAll('.header-highlight').forEach(el => el.classList.remove('header-highlight'));
+  document.querySelectorAll('.row-highlight').forEach(el => el.classList.remove('row-highlight'));
+
+  selectedCellRef = ref;
+  const cellEl = document.getElementById('cell_' + ref);
+  if (cellEl) {
+    cellEl.classList.add('cell-selected');
+    if (scrollIntoView) {
+      cellEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+  }
+
+  const match = ref.match(/^([A-Z]+)(\d+)$/);
+  if (match) {
+    const colHdr = document.getElementById('colHdr_' + match[1]);
+    const rowHdr = document.getElementById('rowHdr_' + match[2]);
+    if (colHdr) colHdr.classList.add('header-highlight');
+    if (rowHdr) rowHdr.classList.add('row-highlight');
+  }
+
+  document.getElementById('activeCellBox').textContent = ref;
+  const info = currentGridData.get(ref);
+  if (!info) {
+    document.getElementById('activeFormulaBox').textContent = '';
+    return;
+  }
+  document.getElementById('activeFormulaBox').textContent = info.formulaVal
+    ? `Đáp án: ${info.displayVal}   |   Công thức: ${info.formulaVal}`
+    : (info.displayVal || '(Ô trống)');
+}
+
+// Nhảy nhanh qua các ô đáp án xanh lá (Đặc biệt tiện lợi trên Điện thoại)
+function jumpToNextGreenCell() {
+  if (!greenCellRefsList.length) {
+    showToast('Hãy mở file Excel (File -> Open) để duyệt các ô đáp án xanh lá!');
+    return;
+  }
+  currentGreenIndex = (currentGreenIndex + 1) % greenCellRefsList.length;
+  const targetRef = greenCellRefsList[currentGreenIndex];
+  selectCell(targetRef, true);
+}
+
+function toggleCompareOld() {
+  if (!currentReport) {
+    showToast('Hãy mở file Excel (File -> Open) để so sánh bài làm cũ!');
+    return;
+  }
+  compareOldMode = !compareOldMode;
+  document.getElementById('btnCompareOld').textContent = compareOldMode ? 'Đang kèm cũ' : 'So sánh cũ';
+  document.getElementById('commentsBtnLabel').textContent = compareOldMode ? 'Đang so sánh cũ' : 'Comments';
+  renderGrid();
+  selectCell(selectedCellRef);
+  showToast(compareOldMode ? 'Đã bật hiển thị so sánh đáp án cũ' : 'Đã tắt so sánh đáp án cũ');
+}
+
+function toggleCheckerRows() {
+  if (!currentReport) {
+    showToast('Hãy mở file Excel (File -> Open) trước!');
+    return;
+  }
+  showCheckerValues = !showCheckerValues;
+  document.getElementById('btnToggleChecker').textContent = showCheckerValues ? 'Ẩn chấm ẩn' : 'Hiện chấm ẩn';
+  renderGrid();
+  selectCell(selectedCellRef);
+  showToast(showCheckerValues ? 'Đã hiện dòng công thức chấm ẩn (TRUE/FALSE)' : 'Đã ẩn dòng chấm điểm');
+}
+
+function resetApp() {
+  currentReport = null;
+  activeMssv = '';
+  originalMssv = '';
+  fileInputEl.value = '';
+  document.getElementById('windowTitleText').textContent = 'Book1 - Excel';
+  document.title = 'Book1 - Excel';
+  document.getElementById('sheetTabName').textContent = 'Sheet1';
+  document.getElementById('greenCountBadge').classList.add('hidden');
+  document.getElementById('mssvSelect').innerHTML = '<option value="">(Chưa tải file)</option>';
+
+  document.getElementById('mobileTitleText').textContent = 'Book1.xlsx';
+  document.getElementById('mobileGreenBadge').classList.add('hidden');
+  document.getElementById('mobileSubStatus').textContent = 'Chạm File ☰ -> Open để tải file';
+  document.getElementById('mobileMssvPill').textContent = 'MSSV';
+  document.getElementById('mobileMssvSelect').innerHTML = '<option value="">(Chưa tải file Excel)</option>';
+
+  renderBlankExcelGrid();
+  showToast('Đã làm mới bảng tính về Book1.');
+}
+
+async function exportFilledExcel() {
+  if (!currentReport) {
+    showToast('Chưa có dữ liệu! Hãy vào File -> Open để tải file Excel lên trước.');
+    return;
+  }
+  const zip = await JSZip.loadAsync(currentReport.originalBuffer);
+  const fullSheetPath = currentReport.sheetPath || 'xl/worksheets/sheet1.xml';
+  let sheetXml = await zip.file(fullSheetPath)?.async('string');
+  if (!sheetXml) return;
+
+  for (const [cellRef, info] of currentGridData.entries()) {
+    if ((info.isGreen || info.isMssv) && info.displayVal !== '') {
+      const cleanVal = String(info.displayVal).trim();
+      const isNum = /^-?\d+(?:\.\d+)?$/.test(cleanVal);
+      const cellRegex = new RegExp(`<c\\b([^>]*?\\br="${cellRef}"[^>]*?)(?:\\/>|>([\\s\\S]*?)<\\/c>)`, 'i');
+      sheetXml = sheetXml.replace(cellRegex, (full, openA, body) => {
+        const attrs = (openA || '').replace(/\s+t="[^"]*"/g, '');
+        const fm = body ? body.match(/<f\b[^>]*>[\s\S]*?<\/f>/) : null;
+        const fTag = fm ? fm[0] : '';
+        return isNum ? `<c${attrs}>${fTag}<v>${cleanVal}</v></c>` : `<c${attrs} t="str">${fTag}<v>${escapeXml(cleanVal)}</v></c>`;
+      });
+    }
+  }
+
+  let wbXml = await zip.file('xl/workbook.xml')?.async('string');
+  if (wbXml && wbXml.includes('<calcPr')) {
+    wbXml = wbXml.replace(/<calcPr\b([^>]*)\/>/, (m, a) => `<calcPr${a.replace(/\s*fullCalcOnLoad="[^"]*"/g, '')} fullCalcOnLoad="1"/>`);
+    zip.file('xl/workbook.xml', wbXml);
+  }
+  zip.file(fullSheetPath, sheetXml);
+
+  const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const baseName = currentReport.fileName.replace(/\.[^/.]+$/, '');
+  a.download = `${baseName}_DaDienDapAn_MSSV_${activeMssv}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất file Excel điền sẵn đáp án ô xanh lá!');
+}
+
+async function runGeminiCheck() {
+  const key = (document.getElementById('geminiKeyInput').value || document.getElementById('mobileGeminiKeyInput').value).trim();
+  if (!key) {
+    showToast('Vui lòng nhập GEMINI_API_KEY trong mục Help trước khi chạy đối soát!');
+    return;
+  }
+  if (!currentReport) {
+    showToast('Vui lòng mở file Excel (File -> Open) trước khi đối soát AI!');
+    return;
+  }
+  toggleAiTaskPane(true);
+  const desktopBox = document.getElementById('aiResultBox');
+  const mobileBox = document.getElementById('mobileAiResultBox');
+  const loadingMsg = 'Đang gửi dữ liệu công thức tới Gemini API để đối soát...';
+  desktopBox.textContent = loadingMsg;
+  mobileBox.textContent = loadingMsg;
+
+  try {
+    const items = [];
+    for (const [ref, info] of currentGridData.entries()) {
+      if (info.isGreen) items.push({ cell: ref, answer: info.displayVal, formula: info.formulaVal });
+    }
+    const extraPrompt = (document.getElementById('geminiPromptInput').value || document.getElementById('mobileGeminiPromptInput').value).trim();
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Đối soát danh sách các ô xanh lá và công thức chấm điểm trong file Excel cho MSSV ${activeMssv}:\n${JSON.stringify(items.slice(0, 45), null, 2)}\n${extraPrompt}` }] }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Không có phản hồi.';
+    desktopBox.textContent = reply;
+    mobileBox.textContent = reply;
+  } catch (err) {
+    const errMsg = 'Lỗi gọi Gemini API: ' + err.message;
+    desktopBox.textContent = errMsg;
+    mobileBox.textContent = errMsg;
+  }
+}
+
+window.onload = function() {
+  renderBlankExcelGrid();
+};
+</script>
+<script>
+// ===== PWA: đăng ký service worker + tự cập nhật khi code trên GitHub thay đổi =====
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    }).catch(err => console.warn('SW lỗi:', err));
+  });
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return; // lần cài đầu tiên thì bỏ qua
+    reloaded = true;
+    if (typeof currentReport !== 'undefined' && currentReport) {
+      showToast('Đã có bản cập nhật mới. Đóng và mở lại app để áp dụng.', false);
+    } else {
+      location.reload();
+    }
+  });
+}
+</script>
+</body>
+</html>
